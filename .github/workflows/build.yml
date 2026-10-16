@@ -18,17 +18,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK & NDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK Licenses & Prepare Config
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          if [ ! -f "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java" ]; then
+            echo "Checking BuildVars..."
+          fi
+
+      - name: Inject Ultimate Hooks
+        run: |
+          if [ -f "inject_ultimate_hooks.py" ]; then
+            python3 inject_ultimate_hooks.py
+          fi
 
       - name: Compile APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleAfatRelease --no-daemon
+          ./gradlew assembleAfatRelease --no-daemon --stacktrace
 
       - name: Upload Ready APK
         uses: actions/upload-artifact@v4
         with:
           name: UltimateGram-APK
-          path: "TMessagesProj/build/outputs/apk/**/
-          *.apk"
+          path: "TMessagesProj/build/outputs/apk/**
+          /*.apk"
